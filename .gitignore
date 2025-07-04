@@ -1,0 +1,11 @@
+build/
+*.sln
+*.vcxproj
+*.user
+*.obj
+*.exe
+*.dll
+*.lib
+*.pdb
+CMakeFiles/
+CMakeCache.txt
