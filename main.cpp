@@ -33,7 +33,7 @@ const Note* getNote(float frequency) {
 
     for (int i = 0; i < noteCount; ++i) {
         float diff = frequency - pianoNotes[i].frequency;
-        if (diff < 0.0f) diff = -diff; // manual abs
+        if (diff < 0.0f) diff = -diff; 
         if (diff < minDiff) {
             minDiff = diff;
             nearestNote = &pianoNotes[i];
@@ -105,13 +105,6 @@ int main() {
         totalPower += power;
     }
 
-    if (totalPower < 50.0f) {
-    std::cout << "\rNo signal                         "
-              << "                         "
-              << "                         " << std::flush;
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    continue;
-}
 
     // HPS. calculates how powerful an indexes overtones are. if they are strong we can assume this is index corresponds to the fundamental freq. 
     std::vector<float> hps = spectrum;
@@ -142,17 +135,15 @@ int main() {
     if (note && note->frequency > 0.0f) {
         centsOff = 1200.0f * std::log2(maxFreq / note->frequency);
     }
-
-    std::cout << std::fixed;
-    std::cout.precision(2);
-    std::cout << "\rNote: " << note->name
-              << " | Freq: " << maxFreq << " Hz"
-              << " | Ideal: " << note->frequency << " Hz"
-              << " | Cents: " << centsOff << "     " << std::flush;
+    
+    if (totalPower < 100.0f) {
+        std::cout << "NO_SIGNAL" << std::endl;
+    } else {
+        std::cout << note->name << " " << maxFreq << " " << centsOff << std::endl;
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-}
-
+    }
 
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
