@@ -70,7 +70,7 @@ int terminalTuner() {
     Pa_Initialize();
     PaStream* stream;
     const int SAMPLE_RATE = 44100;
-    const int FRAMES_PER_BUFFER = 2048;
+    const int FRAMES_PER_BUFFER = 4096;
     float buffer[FRAMES_PER_BUFFER];
 
     Pa_OpenDefaultStream(&stream, 1, 0, paFloat32, SAMPLE_RATE, FRAMES_PER_BUFFER, nullptr, nullptr);
@@ -105,13 +105,8 @@ int terminalTuner() {
         totalPower += power;
     }
 
-    if (totalPower < 50.0f) {
-    std::cout << "\rNo signal                         "
-              << "                         "
-              << "                         " << std::flush;
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    continue;
-}
+    
+
 
     // HPS. calculates how powerful an indexes overtones are. if they are strong we can assume this is index corresponds to the fundamental freq. 
     std::vector<float> hps = spectrum;
@@ -136,7 +131,11 @@ int terminalTuner() {
 
     float binToFreq = SAMPLE_RATE / static_cast<float>(FRAMES_PER_BUFFER);
     float maxFreq = maxIndex * binToFreq;
-
+    if (totalPower < 500.0f || maxFreq < 129) {
+    std::cout << "\rNo signal                         "
+              << "                         "
+              << "                         " << std::flush;
+    continue;
     const Note* note = getNote(maxFreq);
     float centsOff = 0.0f;
     if (note && note->frequency > 0.0f) {
@@ -150,7 +149,6 @@ int terminalTuner() {
               << " | Ideal: " << note->frequency << " Hz"
               << " | Cents: " << centsOff << "     " << std::flush;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
 
 
