@@ -9,4 +9,3 @@ build/
 *.pdb
 CMakeFiles/
 CMakeCache.txt
-main2.cpp
