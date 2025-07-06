@@ -70,7 +70,7 @@ int main() {
     Pa_Initialize();
     PaStream* stream;
     const int SAMPLE_RATE = 44100;
-    const int FRAMES_PER_BUFFER = 2048;
+    const int FRAMES_PER_BUFFER = 4096;
     float buffer[FRAMES_PER_BUFFER];
 
     Pa_OpenDefaultStream(&stream, 1, 0, paFloat32, SAMPLE_RATE, FRAMES_PER_BUFFER, nullptr, nullptr);
@@ -118,6 +118,7 @@ int main() {
         }
     }
 
+    
     float maxValue = hps[1];
     int maxIndex = 1;
     for (int k = 2; k < spectrumSize; ++k) {
@@ -136,13 +137,14 @@ int main() {
         centsOff = 1200.0f * std::log2(maxFreq / note->frequency);
     }
     
-    if (totalPower < 100.0f) {
-        std::cout << "NO_SIGNAL" << std::endl;
+    if (totalPower < 500.0f || maxFreq < 129) {
+    std::cout << "NO_SIGNAL" << std::endl;
+
+
     } else {
         std::cout << note->name << " " << maxFreq << " " << centsOff << std::endl;
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     Pa_StopStream(stream);

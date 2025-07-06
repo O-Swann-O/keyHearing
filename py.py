@@ -1,52 +1,64 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
-from PyQt5.QtCore import QTimer
-import subprocess
+from PyQt5.QtCore import QTimer, QProcess, QDateTime
 import sys
 
 app = QApplication(sys.argv)
 
 window = QWidget()
 window.setWindowTitle('keyHearing')
-window.resize(100, 100)
+window.resize(220, 140)
 
 label = QLabel()
-label.setStyleSheet("color: white; font-size: 24px;")  
+label.setStyleSheet("color: white; font-size: 20px;")
 layout = QVBoxLayout()
 layout.addWidget(label)
 window.setLayout(layout)
-window.setStyleSheet("background-color: black;")  
+window.setStyleSheet("background-color: black;")
 window.show()
 
-process = subprocess.Popen(
-    ["./build/Debug/keyHearing.exe"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-    text=True
-)
+process = QProcess()
+process.setProcessChannelMode(QProcess.MergedChannels)
+
+last_note_time = QDateTime.currentDateTime()
 
 def read_output():
-    line = process.stdout.readline()
-    if not line:
-        return
+    global last_note_time
 
-    line = line.strip()
-    if line == "NO_SIGNAL":
-        label.setText("Play something!")
-        window.setStyleSheet("background-color: black;")
-    else:
-        try:
-            note, freq, cents = line.split()
-            label.setText(f"Note: {note}\nFrequency: {freq} Hz\nCents off: {cents}")
-            if abs(float(cents)) < 30:
-                window.setStyleSheet("background-color: green;")
-            else:
-                window.setStyleSheet("background-color: red;")
-        except ValueError:
-            label.setText(f"Malformed output:\n{line}")
-            window.setStyleSheet("background-color: orange;")
+    while process.canReadLine():
+        line = process.readLine().data().decode().strip()
+        if not line:
+            return
 
-timer = QTimer()
-timer.timeout.connect(read_output)
-timer.start(50)
+        current_time = QDateTime.currentDateTime()
+
+        if line == "NO_SIGNAL":
+            if last_note_time.msecsTo(current_time) > 400:
+                label.setText("Play something!")
+                window.setStyleSheet("background-color: black;")
+        else:
+            try:
+                note, freq, cents = line.split()
+                cents = float(cents)
+                last_note_time = current_time  
+
+                if abs(cents) < 20:
+                    status = "In Tune"
+                    color = "green"
+                elif cents > 0:
+                    status = "Tune Down"
+                    color = "red"
+                else:
+                    status = "Tune Up"
+                    color = "red"
+
+                label.setText(f"Note: {note}\nCents off: {cents:.1f}\n{status}")
+                window.setStyleSheet(f"background-color: {color};")
+
+            except ValueError:
+                label.setText(f"Malformed output:\n{line}")
+                window.setStyleSheet("background-color: orange;")
+
+process.readyReadStandardOutput.connect(read_output)
+process.start("./build/Debug/keyHearing.exe")
 
 sys.exit(app.exec_())
